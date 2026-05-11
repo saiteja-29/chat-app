@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat WebSocket Test</title>
+</head>
+<body>
+  <h2>WebSocket Chat Test</h2>
+
+  <label>JWT Token</label><br />
+  <textarea id="token" rows="4" cols="100"></textarea><br /><br />
+
+  <label>Conversation ID</label><br />
+  <input id="conversationId" size="80" /><br /><br />
+
+  <button onclick="connect()">Connect</button>
+  <button onclick="sendMessage()">Send Message</button>
+
+  <pre id="log"></pre>
+
+  <script>
+    let socket;
+
+    function log(message) {
+      document.getElementById("log").textContent += message + "\n";
+    }
+
+    function connect() {
+      const token = document.getElementById("token").value.trim();
+
+      socket = new WebSocket(`ws://localhost:8000/ws?token=${token}`);
+
+      socket.onopen = () => {
+        log("Connected");
+
+        setInterval(() => {
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "heartbeat"
+                }));
+                }
+            }, 30000);
+        };
+
+      socket.onmessage = (event) => {
+        log("Received: " + event.data);
+      };
+
+      socket.onclose = () => {
+        log("Disconnected");
+      };
+
+      socket.onerror = (error) => {
+        log("Error: " + error);
+      };
+    }
+
+    function sendMessage() {
+      const conversationId = document.getElementById("conversationId").value.trim();
+
+      socket.send(JSON.stringify({
+        type: "message.send",
+        conversation_id: conversationId,
+        content: "Ahoy from WebSocket!",
+        message_type: "text"
+      }));
+    }
+  </script>
+</body>
+</html>
